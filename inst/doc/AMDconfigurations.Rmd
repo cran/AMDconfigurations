@@ -1,0 +1,141 @@
+---
+title: "Geometric Analysis of Recurrent Configurations with AMDconfigurations"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Geometric Analysis of Recurrent Configurations with AMDconfigurations}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment  = "#>",
+  message  = FALSE,
+  warning  = FALSE
+)
+library(AMDconfigurations)
+
+```
+
+# Introduction
+
+Many multivariate systems can be viewed as self‑organising dynamical systems, where stability and function emerge from tightly coupled interactions and feedbacks across scales. In this perspective, each observation is a snapshot of the system’s instantaneous configuration in a high‑dimensional state space.
+
+Complex‑systems theory predicts that such systems do not explore state space uniformly. Instead, trajectories tend to dwell in a limited set of recurrent regimes, often interpreted as multistable, attractor‑like or self‑organised configurations. With cross‑sectional data, this prediction becomes a geometric expectation: if preferred regimes manifest at the level of the observed variables, samples should cluster within a restricted number of high‑occupancy regions of configuration space, while intermediate regions remain sparsely populated.
+
+The <i>AMDconfigurations</i> package implements a geometric framework to detect and characterise these recurrent regimes using the <i>Average Membership Degree</i> (AMD). For each candidate number of configurations <i>c</i>, fuzzy c‑means clustering is run repeatedly, and AMD summarises how sharply samples are assigned to clusters across runs. Evaluating AMD as a function of <i>c</i> yields the AMD curve, whose peak defines the best‑supported number of configurations, <i>c</i><sub>opt</sub>.
+
+Beyond selecting <i>c</i><sub>opt</sub>, the framework quantifies how well‑defined the inferred configurations are via <b>σ‑equivalent calibration</b>, which matches the observed AMD peak to synthetic reference datasets with controlled within‑configuration dispersion. This provides an interpretable measure of geometric compactness that is comparable across datasets and preprocessing choices.
+
+Identifying the number, location and definition of recurrent configurations is the first step of the AMD workflow. Once these configurations have been detected, different scientific questions may arise: for example, one may wish to determine which internal state variables contribute to configuration separation, which external control parameters modulate the dynamics from which the configurations emerge, or both. These questions do not depend on the domain and can be posed even within a single dataset.
+
+This vignette focuses on the geometric core of the AMD workflow. The two full examples included in the package—one ecological and one transcriptomic—extend this workflow to more complex settings and illustrate two different types of questions that can be asked once recurrent configurations have been identified:
+
+- in one example, the aim is to evaluate whether external control parameters help explain configuration structure,  
+- in the other, the aim is to identify the internal state variables most strongly associated with configuration separation.
+
+The AMD framework itself is agnostic to this distinction: it detects the recurrent regimes supported by the data, and the subsequent interpretation—whether in terms of control parameters, state variables, or both—depends entirely on the scientific objective.
+
+
+# Background
+
+The AMD framework has evolved across several scientific domains.
+
+<i>Early development</i>  
+The idea of using membership‑based summaries from fuzzy clustering to detect recurrent configurations first appeared in Mendoza & Araújo (2019, <i>Nature Communications</i>), where it was introduced as a geometric signature of multistability in ecological communities. The method was formalised in Mendoza & Araújo (2022, <i>Ecography</i>), which:
+
+- provided the first explicit mathematical definition of AMD  
+- clarified its geometric rationale  
+- established the AMD curve as a criterion to detect discrete configurations  
+- introduced the idea of comparing real AMD peaks with synthetic references  
+
+Across subsequent ecological and paleoecological studies (<i>PNAS</i>, <i>Journal of Biogeography</i>, <i>Ecography</i>), AMD consistently revealed discrete ecological configurations and helped identify the control parameters governing their emergence (e.g., climate, productivity, environmental stability).
+
+<i>Transcriptomic generalisation</i>  
+A later transcriptomic study extended the method to extremely high‑dimensional gene‑expression data (>58,000 transcripts). Here the focus shifted from external drivers to internal state variables: instead of identifying environmental controls, the goal was to determine which transcripts define the observed configurations.
+
+Despite the dimensionality, configuration separation was dominated by a small set of mitochondrial genes, illustrating how AMD isolates compact, interpretable axes of variation.
+
+This study also formalised the synthetic‑reference idea into a reproducible σ‑equivalent calibration, providing:
+
+- a continuous dispersion scale  
+- a clear interpretation of configuration definition  
+- comparability across datasets  
+
+This methodological consolidation motivated the development of the <i>AMDconfigurations</i> package.
+
+# Installation
+
+Development version from GitHub:
+
+```
+# eval=FALSE to avoid execution during CRAN checks # devtools::install_github("mmendoza1967/AMDconfigurations")
+```
+
+CRAN version (once available):
+
+```
+install.packages("devtools")
+```
+
+Load the package:
+
+```
+library("AMDconfigurations")
+```
+
+# Example datasets
+
+The package includes two real datasets that illustrate how the AMD workflow can be applied to different scientific questions.  
+Both datasets contain multivariate observations from complex systems, but they differ in dimensionality, biological context, and in the type of inference that becomes meaningful once recurrent configurations have been detected.
+
+The AMD framework itself is agnostic to these differences: it identifies the geometric structure of the data, and the interpretation of that structure—whether in terms of control parameters, state variables, or both—depends on the scientific context and on the objective of the analysis.  
+The two examples included in the package therefore represent <b>two distinct types of post‑AMD questions</b>, not domain‑specific rules.
+
+## Ecological dataset: Fulldata
+
+The dataset <b>Fulldata</b> contains trophic‑guild composition of terrestrial vertebrate assemblages across the global terrestrial surface, together with bioclimatic variables and protected‑area metadata.  
+Each row corresponds to a 1 × 1° terrestrial grid cell, and the table also includes the geographic coordinates and the name of the protected area associated with that cell.  
+These fields are used later to define spatial blocks for cross‑validation.
+
+From this table we derive:
+
+- <b>Trophdata</b>: a nine‑dimensional trophic space used to detect recurrent trophic configurations  
+- <b>Climdata</b>: a set of bioclimatic predictors used to evaluate whether external environmental conditions can predict those configurations  
+
+This example illustrates a situation in which, after detecting configurations, it is natural to ask whether <b>external control parameters</b> (here, climate) help explain their emergence or spatial distribution.
+
+The full script is provided in:  
+`inst/examples/example_ecology.R`
+
+## Transcriptomic dataset: Transcdata
+
+The dataset <b>Transcdata</b> contains high‑dimensional gene‑expression profiles (>58,000 variables) from a cancer compendium.  
+After removing metadata columns, the expression matrix defines a very high‑dimensional state space in which each sample represents a transcriptomic configuration.
+
+The package includes a reduced version of this dataset, `Transcdata_small`, containing the 1000 variables with highest variance.  
+This reduced dataset is used in the examples and ensures that the package remains lightweight and CRAN‑compatible.
+
+The full cleaned transcriptomic dataset (~58,000 variables) is publicly available at Zenodo  
+(DOI: https://doi.org/10.5281/zenodo.18604443) and is required to reproduce the complete analyses presented in the associated publication.
+
+In this example, once configurations have been detected, the natural question is different:  
+rather than external drivers, the goal is to identify the <b>internal state variables</b> (transcripts) most strongly associated with configuration separation.  
+This is achieved using XGBoost, robustness analysis across multiple refits, and partial‑dependence profiles.
+
+## Purpose of the two examples
+
+Together, the two datasets illustrate <b>two complementary types of inference</b> that arise naturally once recurrent configurations have been identified:
+
+- detecting recurrent configurations in high‑dimensional data  
+- interpreting those configurations either through  
+  - <b>external control parameters</b>, or  
+  - <b>internal state variables</b>  
+
+The vignette focuses on the geometric core of the method, while the examples show how the same workflow can support different types of scientific questions depending on the problem being addressed. Once recurrent configurations have been identified, one may investigate external control parameters, internal state variables, or both, even within the same dataset.
+
+
+
+
+
