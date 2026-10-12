@@ -5,10 +5,14 @@
 \alias{Transcdata_small}
 \title{Reduced transcriptomic dataset (1000 variables)}
 \format{
-A numeric matrix with 933 rows and 1000 columns.
+A numeric data frame with 931 rows (samples) and 1,000 columns
+(gene-expression variables), ordered by decreasing variance in the full
+cleaned expression matrix.
 }
 \source{
-Original dataset cleaned and processed by the authors.
+Mendoza, M. and Medina, M. A. (2026), \emph{High-dimensional
+transcriptomic dataset for the AMDconfigurations package}, Zenodo,
+\doi{10.5281/zenodo.18604443}, CC BY 4.0.
 }
 \usage{
 data("Transcdata_small")

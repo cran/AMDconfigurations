@@ -1,8 +1,8 @@
 ---
-title: "Geometric Analysis of Recurrent Configurations with AMDconfigurations"
+title: "The computational core of Average Membership Degree"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Geometric Analysis of Recurrent Configurations with AMDconfigurations}
+  %\VignetteIndexEntry{The computational core of Average Membership Degree}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -10,132 +10,213 @@ vignette: >
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment  = "#>",
-  message  = FALSE,
-  warning  = FALSE
+  comment = "#>",
+  message = FALSE
 )
 library(AMDconfigurations)
-
 ```
 
-# Introduction
+# Scope
 
-Many multivariate systems can be viewed as self‑organising dynamical systems, where stability and function emerge from tightly coupled interactions and feedbacks across scales. In this perspective, each observation is a snapshot of the system’s instantaneous configuration in a high‑dimensional state space.
+Average Membership Degree (AMD) is a summary of a soft-membership matrix. It
+is not a clustering algorithm. The package currently uses fuzzy c-means to
+estimate memberships when constructing an AMD curve, but this backend is
+conceptually separate from the definition of the index.
 
-Complex‑systems theory predicts that such systems do not explore state space uniformly. Instead, trajectories tend to dwell in a limited set of recurrent regimes, often interpreted as multistable, attractor‑like or self‑organised configurations. With cross‑sectional data, this prediction becomes a geometric expectation: if preferred regimes manifest at the level of the observed variables, samples should cluster within a restricted number of high‑occupancy regions of configuration space, while intermediate regions remain sparsely populated.
+For a membership matrix $U=(u_{ij})$ with $n$ observations and $c$ columns,
 
-The <i>AMDconfigurations</i> package implements a geometric framework to detect and characterise these recurrent regimes using the <i>Average Membership Degree</i> (AMD). For each candidate number of configurations <i>c</i>, fuzzy c‑means clustering is run repeatedly, and AMD summarises how sharply samples are assigned to clusters across runs. Evaluating AMD as a function of <i>c</i> yields the AMD curve, whose peak defines the best‑supported number of configurations, <i>c</i><sub>opt</sub>.
+$$
+\operatorname{AMD}(U)=\frac{1}{n}\sum_{i=1}^{n}\max_j(u_{ij})-\frac{1}{c}.
+$$
 
-Beyond selecting <i>c</i><sub>opt</sub>, the framework quantifies how well‑defined the inferred configurations are via <b>σ‑equivalent calibration</b>, which matches the observed AMD peak to synthetic reference datasets with controlled within‑configuration dispersion. This provides an interpretable measure of geometric compactness that is comparable across datasets and preprocessing choices.
+Therefore $0 \leq \operatorname{AMD}(U) \leq 1-1/c$. AMD is zero when every
+row is uniform and reaches its upper bound for crisp memberships. The formula
+also accepts $c=1$, where AMD is zero, but operational curves compare
+alternative resolutions and begin at $c=2$.
 
-Identifying the number, location and definition of recurrent configurations is the first step of the AMD workflow. Once these configurations have been detected, different scientific questions may arise: for example, one may wish to determine which internal state variables contribute to configuration separation, which external control parameters modulate the dynamics from which the configurations emerge, or both. These questions do not depend on the domain and can be posed even within a single dataset.
+# Constructing a curve
 
-This vignette focuses on the geometric core of the AMD workflow. The two full examples included in the package—one ecological and one transcriptomic—extend this workflow to more complex settings and illustrate two different types of questions that can be asked once recurrent configurations have been identified:
+For each candidate $c$, `compute_amd_curve()` runs several initialisations of
+the current fuzzy c-means backend. Random starts are computational attempts to
+estimate the same solution, not statistical replicates. The converged fit with
+the smallest fuzzy c-means objective supplies the primary curve point.
 
-- in one example, the aim is to evaluate whether external control parameters help explain configuration structure,  
-- in the other, the aim is to identify the internal state variables most strongly associated with configuration separation.
+The following example contains three groups by construction.
 
-The AMD framework itself is agnostic to this distinction: it detects the recurrent regimes supported by the data, and the subsequent interpretation—whether in terms of control parameters, state variables, or both—depends entirely on the scientific objective.
+```{r curve}
+set.seed(8301)
+X <- rbind(
+  matrix(rnorm(90, mean = 0, sd = 0.7), ncol = 3),
+  matrix(rnorm(90, mean = 4, sd = 0.7), ncol = 3),
+  matrix(rnorm(90, mean = 8, sd = 0.7), ncol = 3)
+)
 
+candidate_c <- 2:5
+starts <- 3L
+seed_matrix <- outer(
+  seq_len(starts),
+  candidate_c,
+  function(start, c) 100000L + 1000L * c + start
+)
+colnames(seed_matrix) <- as.character(candidate_c)
 
-# Background
+amd_curve <- compute_amd_curve(
+  X,
+  its = starts,
+  nin = min(candidate_c),
+  nsp = max(candidate_c),
+  seeds = seed_matrix,
+  iter_max = 1000,
+  verbose = FALSE
+)
 
-The AMD framework has evolved across several scientific domains.
+data.frame(
+  c = candidate_c,
+  AMD = unname(amd_curve$curve),
+  converged_starts = colSums(amd_curve$converged)
+)
 
-<i>Early development</i>  
-The idea of using membership‑based summaries from fuzzy clustering to detect recurrent configurations first appeared in Mendoza & Araújo (2019, <i>Nature Communications</i>), where it was introduced as a geometric signature of multistability in ecological communities. The method was formalised in Mendoza & Araújo (2022, <i>Ecography</i>), which:
-
-- provided the first explicit mathematical definition of AMD  
-- clarified its geometric rationale  
-- established the AMD curve as a criterion to detect discrete configurations  
-- introduced the idea of comparing real AMD peaks with synthetic references  
-
-Across subsequent ecological and paleoecological studies (<i>PNAS</i>, <i>Journal of Biogeography</i>, <i>Ecography</i>), AMD consistently revealed discrete ecological configurations and helped identify the control parameters governing their emergence (e.g., climate, productivity, environmental stability).
-
-<i>Transcriptomic generalisation</i>  
-A later transcriptomic study extended the method to extremely high‑dimensional gene‑expression data (>58,000 transcripts). Here the focus shifted from external drivers to internal state variables: instead of identifying environmental controls, the goal was to determine which transcripts define the observed configurations.
-
-Despite the dimensionality, configuration separation was dominated by a small set of mitochondrial genes, illustrating how AMD isolates compact, interpretable axes of variation.
-
-This study also formalised the synthetic‑reference idea into a reproducible σ‑equivalent calibration, providing:
-
-- a continuous dispersion scale  
-- a clear interpretation of configuration definition  
-- comparability across datasets  
-
-This methodological consolidation motivated the development of the <i>AMDconfigurations</i> package.
-
-# Installation
-
-Development version from GitHub:
-
-```
-# eval=FALSE to avoid execution during CRAN checks # devtools::install_github("mmendoza1967/AMDconfigurations")
-```
-
-CRAN version (once available):
-
-```
-install.packages("devtools")
-```
-
-Load the package:
-
-```
-library("AMDconfigurations")
+abs(amd_curve$curve[["3"]] - amd_curve$curve[["4"]])
 ```
 
-# Example datasets
+```{r curve-plot, fig.width=6, fig.height=4}
+plot(amd_curve, open_device = FALSE)
+```
 
-The package includes two real datasets that illustrate how the AMD workflow can be applied to different scientific questions.  
-Both datasets contain multivariate observations from complex systems, but they differ in dimensionality, biological context, and in the type of inference that becomes meaningful once recurrent configurations have been detected.
+Named seed matrices make the mapping from `(start, c)` explicit. If a wider
+candidate range uses the same master matrix, all common fits remain identical.
 
-The AMD framework itself is agnostic to these differences: it identifies the geometric structure of the data, and the interpretation of that structure—whether in terms of control parameters, state variables, or both—depends on the scientific context and on the objective of the analysis.  
-The two examples included in the package therefore represent <b>two distinct types of post‑AMD questions</b>, not domain‑specific rules.
+New curve objects carry `schema_version = 2L`. Saved public 0.1.0 objects can
+still be printed, summarised and plotted from their stored `mean` and `max`
+values. They emit a warning because they do not contain objectives and fitted
+memberships from which the current primary curve could be reconstructed.
 
-## Ecological dataset: Fulldata
+This deliberately retained example also illustrates why the complete curve is
+the primary object of interpretation. The data generator contains three
+groups, yet the AMD values at `c=3` and `c=4` are nearly tied and the numerical
+winner can be `c=4`. The subsequent decline supports a well-defined resolution
+around that short plateau, but the isolated arithmetic maximum does not by
+itself distinguish three generating groups from a four-part refinement. The
+known truth is used below to extract `c=3`; it is not inferred by `which.max()`.
 
-The dataset <b>Fulldata</b> contains trophic‑guild composition of terrestrial vertebrate assemblages across the global terrestrial surface, together with bioclimatic variables and protected‑area metadata.  
-Each row corresponds to a 1 × 1° terrestrial grid cell, and the table also includes the geographic coordinates and the name of the protected area associated with that cell.  
-These fields are used later to define spatial blocks for cross‑validation.
+# Reading before assigning
 
-From this table we derive:
+`c_peak` and its compatibility alias `c_opt` report the first numerical maximum
+of the evaluated primary curve. They do not encode a complete scientific rule.
+In particular:
 
-- <b>Trophdata</b>: a nine‑dimensional trophic space used to detect recurrent trophic configurations  
-- <b>Climdata</b>: a set of bioclimatic predictors used to evaluate whether external environmental conditions can predict those configurations  
+- a maximum at the right boundary has no observed post-peak behaviour;
+- nearly equal adjacent values may represent a resolution plateau;
+- exact ties are reported at the smaller `c`;
+- an internal maximum should be considered with its subsequent decline,
+  stability and the range examined.
 
-This example illustrates a situation in which, after detecting configurations, it is natural to ask whether <b>external control parameters</b> (here, climate) help explain their emergence or spatial distribution.
+The package therefore requires an explicit `c` when extracting assignments.
+Here `c=3` is used because it is known from the synthetic generator, not because
+the API selected it automatically.
 
-The full script is provided in:  
-`inst/examples/example_ecology.R`
+```{r assignment}
+chosen_c <- 3L
+assignment <- assign_configurations(amd_curve, c = chosen_c)
 
-## Transcriptomic dataset: Transcdata
+identical(
+  assignment$membership,
+  amd_curve$selected_fits[[as.character(chosen_c)]]$membership
+)
+```
 
-The dataset <b>Transcdata</b> contains high‑dimensional gene‑expression profiles (>58,000 variables) from a cancer compendium.  
-After removing metadata columns, the expression matrix defines a very high‑dimensional state space in which each sample represents a transcriptomic configuration.
+# Describing stored partitions
 
-The package includes a reduced version of this dataset, `Transcdata_small`, containing the 1000 variables with highest variance.  
-This reduced dataset is used in the examples and ensures that the package remains lightweight and CRAN‑compatible.
+The diagnostic interface reads the fits already stored in the curve. It does
+not refit them, construct sample distances or select a number of groups.
 
-The full cleaned transcriptomic dataset (~58,000 variables) is publicly available at Zenodo  
-(DOI: https://doi.org/10.5281/zenodo.18604443) and is required to reproduce the complete analyses presented in the associated publication.
+```{r stored-diagnostics}
+diagnostics <- diagnose_amd(amd_curve)
+diagnostics$candidates[, c("c", "amd", "mean_winning_membership")]
+diagnostics$transitions
+```
 
-In this example, once configurations have been detected, the natural question is different:  
-rather than external drivers, the goal is to identify the <b>internal state variables</b> (transcripts) most strongly associated with configuration separation.  
-This is achieved using XGBoost, robustness analysis across multiple refits, and partial‑dependence profiles.
+The dictionary in `diagnostics$dictionary` defines each summary. Membership
+entropy and top-two gaps describe membership definition, not density or
+geometric compactness. Agreement between adjacent partitions is not stability
+under sample resampling. The default ambiguity gap is a descriptive convention,
+not a universal cutoff. Diagnostics not measured are listed explicitly in
+`diagnostics$unavailable`.
 
-## Purpose of the two examples
+# Optional model-assisted interpretation
 
-Together, the two datasets illustrate <b>two complementary types of inference</b> that arise naturally once recurrent configurations have been identified:
+Version 0.2.0 includes an optional reader. It uses five fitted
+random forests in an external corrected-v2 bundle; no models are downloaded or
+trained by the package. `ranger` and `digest` are needed only for this workflow.
+Obtain the model file and its expected SHA-256 from the same trusted release.
 
-- detecting recurrent configurations in high‑dimensional data  
-- interpreting those configurations either through  
-  - <b>external control parameters</b>, or  
-  - <b>internal state variables</b>  
+```{r optional-reader, eval=FALSE}
+reader <- load_amd_predictor(bundle_path, sha256 = bundle_sha256)
+result <- predict_amd(X, reader, seed = 123, verbose = FALSE)
+plot(result)
+result$proposed_k
+result$reliability
+```
 
-The vignette focuses on the geometric core of the method, while the examples show how the same workflow can support different types of scientific questions depending on the problem being addressed. Once recurrent configurations have been identified, one may investigate external control parameters, internal state variables, or both, even within the same dataset.
+The reader requires `c=2:14`, 20 principal starts, `m=2`, `iter_max=2000`, and
+no scaling or variable selection. A curve already computed with those settings
+can be passed as `curve`; the shorter illustrative curve above cannot. There
+are also five computational refits per c for the frozen descriptors, even when
+the main curve is reused. These refits do not resample observations.
 
+The proposed K targets the numerically resolved density-mode count used as the
+simulation reference, not necessarily the number of generating components.
+AMD itself does not estimate a density. The proposal is separate from the
+numerical AMD maximum and does not establish the true number of configurations.
+Off-grid proposals themselves are labelled exploratory. Assignments still require the user's
+explicit `c`. Reliability estimates correctness of the emitted one/several-modes
+decision and correctness of the exact proposed K, separately; it is not directly
+the probability that groups exist.
 
+The corrected forests' historical calibrators were reassessed on the previously
+examined final simulation bank, not in a new prospective validation. Reliability
+is suppressed by default unless N is 150 or 600, D is 2, 6 or 15, the output is
+within the observed support K=1:8 and no unassessed missingness occurs. Matching
+N and D does not certify new-data geometry; do not subsample or pad data merely
+to obtain a reported certainty. `allow_extrapolation=TRUE` can expose unvalidated
+numerical values away from the grid, but cannot validate them.
 
+The frozen models omitted value columns for the zero-variance fraction
+(always zero) and minimum covariance-rank fraction (always one). Departures
+suppress certainty even on the grid and cannot be overridden with
+`allow_extrapolation`.
 
+The descriptors include quadratic distance and covariance operations. A
+working-memory risk guard runs before new fits; it excludes the loaded forests
+and is neither a guaranteed total-memory bound nor a runtime limit. Partition
+distances use all observations; global distance summaries use a seeded sample
+of 2000 rows when N > 2000, as required by the frozen feature definition. The
+actual count and exact/subsampled flags are recorded. No additional approximation
+bypasses the guard. The manual workflow and stored-partition diagnostics remain usable
+without these operations.
 
+# Reproducibility record
+
+The curve stores seeds, objectives, convergence, transformations, retained
+variables and the map of complete and omitted rows. It also links to a
+process-level software manifest.
+
+```{r manifest}
+manifest <- amd_reproducibility_manifest()
+identical(amd_curve$manifest_id, manifest$manifest_id)
+manifest[c("r_version", "amdconfigurations_version", "e1071_version", "rng_kind")]
+```
+
+In a production analysis, retrieve the manifest immediately after every curve
+and save one copy of each distinct `manifest_id`. Curves sharing an identifier
+can share that copy. Each parallel worker, and each different `RNGkind()` used
+within a worker, receives its own identifier.
+
+# Current limits
+
+The `mean` and `max` components are preserved for compatibility with earlier
+versions. They summarise all starts, including nonconverged starts, and are not
+the primary curve or a basis for scientific selection.
+
+The package does not claim that AMD height, peak sharpness or curve prominence
+measures compactness, separation or definition in a universal sense.

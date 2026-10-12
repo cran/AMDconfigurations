@@ -2,7 +2,7 @@
 % Please edit documentation in R/print.amd_curve().R
 \name{print.amd_curve}
 \alias{print.amd_curve}
-\title{Print method for AMD curve objects}
+\title{Print an AMD curve object}
 \usage{
 \method{print}{amd_curve}(x, ...)
 }
@@ -15,7 +15,5 @@
 Invisibly returns \code{x}.
 }
 \description{
-Provides a concise summary of an AMD curve object returned by
-\code{compute_amd_curve()}. Displays the optimal number of configurations
-\if{html}{\out{<i>}}c\if{html}{\out{</i>}}\if{html}{\out{<sub>}}opt\if{html}{\out{</sub>}}, the AMD peak, and the evaluated range of \code{k}.
+Print an AMD curve object
 }

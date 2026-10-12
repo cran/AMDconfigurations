@@ -5,10 +5,17 @@
 \alias{Fulldata}
 \title{Ecological dataset used in the example}
 \format{
-A data frame with multiple variables (see example script for details).
+A data frame with 6,619 rows and 34 columns. Columns \code{lat}, \code{lon},
+\code{Key}, \code{island}, \code{Clst}, and \code{NAME} identify and describe sampling units;
+\code{IFd}, \code{GIn}, \code{HIn}, \code{IFr}, \code{Crn}, \code{Pln}, \code{Frg}, \code{Nct}, and \code{Grn} are the
+nine trophic-structure variables used by the package example; and \code{BIO1}
+to \code{BIO19} are bioclimatic variables. See the cited article and its
+supporting information for the complete variable definitions and data
+provenance.
 }
 \source{
-Internal dataset prepared by the authors.
+Data prepared for Mendoza and Araújo (2022),
+\doi{10.1111/ecog.06289}.
 }
 \usage{
 data("Fulldata")

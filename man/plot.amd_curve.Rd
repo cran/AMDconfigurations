@@ -4,15 +4,14 @@
 \alias{plot.amd_curve}
 \title{Plot method for AMD curve objects}
 \usage{
-\method{plot}{amd_curve}(x, type = c("mean", "max"), open_device = TRUE, ...)
+\method{plot}{amd_curve}(x, type = c("curve", "mean", "max"), open_device = FALSE, ...)
 }
 \arguments{
 \item{x}{An object of class \code{"amd_curve"}.}
 
-\item{type}{Character string indicating which AMD curve to plot:
-\code{"mean"} (default) or \code{"max"}.}
+\item{type}{Curve to plot; see \code{plot_AMD()}.}
 
-\item{open_device}{Logical; if \code{TRUE}, open a new graphics device.}
+\item{open_device}{Logical; open a new graphics device before plotting.}
 
 \item{...}{Additional arguments passed to \code{plot_AMD()}.}
 }
@@ -20,7 +19,5 @@
 Invisibly returns \code{NULL}.
 }
 \description{
-This method provides a convenient interface to plot AMD curves returned by
-\code{compute_amd_curve()}. It forwards the call to \code{plot_AMD()}, allowing
-users to simply call \code{plot(res)}.
+Plot method for AMD curve objects
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/assign_configurations.R
 \name{assign_configurations}
 \alias{assign_configurations}
-\title{Fuzzy c-means clustering with multiple random initializations}
+\title{Assign observations to a user-selected number of configurations}
 \usage{
 assign_configurations(
   data,
@@ -11,53 +11,98 @@ assign_configurations(
   iter_max = 100,
   m = 2,
   scale_data = FALSE,
-  verbose = TRUE
+  verbose = TRUE,
+  seeds = NULL
 )
 }
 \arguments{
-\item{data}{A numeric matrix or data frame. Rows are samples and columns are
-features.}
+\item{data}{Preferably an object returned by \code{\link[=compute_amd_curve]{compute_amd_curve()}}. A numeric
+matrix or data frame with observations in rows and variables in columns is
+accepted only through the provisional compatibility mode.}
 
-\item{c}{Integer. Number of clusters.}
+\item{c}{One integer greater than or equal to 2. The number of
+configurations to extract or fit. It must have been evaluated when \code{data}
+is an AMD curve.}
 
-\item{its}{Integer. Number of random initializations (default: 50).}
+\item{its}{Positive integer number of random starts in independent fitting
+mode (default: 50). Ignored when extracting from an AMD curve.}
 
-\item{iter_max}{Integer. Maximum number of iterations for the c-means
-algorithm (default: 100).}
+\item{iter_max}{Positive integer maximum number of fuzzy c-means iterations
+in independent fitting mode (default: 100). Ignored when extracting from
+an AMD curve.}
 
-\item{m}{Numeric. Fuzziness parameter (default: 2).}
+\item{m}{Fuzziness parameter greater than one in independent fitting mode
+(default: 2). Ignored when extracting from an AMD curve.}
 
-\item{scale_data}{Logical. If TRUE, the data matrix is scaled before
-clustering.}
+\item{scale_data}{Logical; standardize variables before independent fitting.
+Ignored when extracting from an AMD curve.}
 
-\item{verbose}{Logical. If TRUE, progress messages are printed.}
+\item{verbose}{Logical; print progress information in independent fitting
+mode. Ignored when extracting from an AMD curve.}
+
+\item{seeds}{Optional vector of positive integer seeds, one per random start
+in independent fitting mode. Supplied seeds make the result reproducible
+and do not alter the caller's random-number state. Ignored when extracting
+from an AMD curve. If \code{NULL}, seeds are sampled from the caller's active
+random-number generator and advance its state. Unused trailing seeds are
+ignored. Duplicate seeds reduce the number of unique starts and generate a
+warning.}
 }
 \value{
-A list of class \code{"amd_assignment"} containing:
-\describe{
-\item{c_opt}{The number of clusters used.}
-\item{cluster}{A vector of hard cluster assignments (1..c).}
-\item{membership}{The fuzzy membership matrix.}
-\item{centers}{Cluster centers from the best solution.}
-\item{objective}{The minimum within-cluster objective value.}
-}
+A list of class \code{"amd_assignment"}. \code{schema_version} identifies the
+public object layout. The object contains the selected \code{c}
+(also in the compatibility alias \code{c_opt}), hard assignments, memberships,
+centers, AMD and objective values, selection metadata, and a \code{starts} data
+frame with the diagnostics for every random start. \code{source} distinguishes
+exact extraction from an AMD curve from an independent fit. Components
+\code{backend} and \code{selection_rule} identify how memberships were estimated and
+how the retained fit was selected.
+\code{complete_rows} and \code{omitted_rows} map fitted observations back to the
+input rows when incomplete rows were removed. \code{settings} records the
+fitting and preprocessing contract, while \code{manifest_id} links the object
+to \code{\link[=amd_reproducibility_manifest]{amd_reproducibility_manifest()}}. In curve-extraction mode, \code{settings}
+retains the complete candidate range used to create the curve; in
+independent fitting mode it records the single fitted \code{c}. If converged
+starts have exactly tied minimum objectives, the first start is selected.
+The selected fit is always converged under the stated iteration rule.
 }
 \description{
-This function performs fuzzy c-means clustering on a dataset using multiple
-random initializations. For each initialization, the algorithm is run using
-\code{e1071::cmeans()}, and the solution with the smallest within-cluster
-objective function is retained.
+The official workflow supplies an \code{amd_curve} object. The function then
+extracts the exact fit that produced the AMD value at the explicitly
+requested \code{c}; no new clustering is performed.
 }
 \details{
-The function is independent from the AMD workflow. It simply provides a
-robust fuzzy clustering procedure by selecting the best solution across
-several random seeds.
+A provisional compatibility mode accepts a numeric matrix or data frame and
+independently estimates memberships with repeated fuzzy c-means starts. It
+is not the package's recommended scientific workflow and may be deprecated
+or removed in a future version.
+
+The function never chooses \code{c} automatically. In particular, passing an AMD
+curve still requires an explicit \code{c}, so the user can incorporate the shape
+of the curve rather than being forced to accept its numerical maximum.
+
+Future automation may assist with interpreting the curve and proposing \code{c},
+but it must be validated against known truth and must not silently replace
+inspection of the complete curve.
+
+AMD is defined independently of fuzzy c-means. Fuzzy c-means is only the
+membership-estimation backend used by the current implementation of
+\code{\link[=compute_amd_curve]{compute_amd_curve()}} and by the provisional compatibility mode.
 }
 \examples{
 \donttest{
-X <- matrix(rnorm(2000), ncol = 10)
-res <- assign_configurations(X, c = 4)
-table(res$cluster)
+set.seed(1)
+X <- rbind(
+  matrix(rnorm(100, mean = -2), ncol = 2),
+  matrix(rnorm(100, mean = 2), ncol = 2)
+)
+curve <- compute_amd_curve(
+  X, its = 5, nin = 2, nsp = 4, seeds = 1:15, verbose = FALSE
+)
+
+# Exact fit underlying the selected point of the inspected curve
+extracted <- assign_configurations(curve, c = 2)
+
 }
 
 }

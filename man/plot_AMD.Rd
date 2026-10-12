@@ -2,39 +2,38 @@
 % Please edit documentation in R/plot_AMD().R
 \name{plot_AMD}
 \alias{plot_AMD}
-\title{Plot the AMD curve}
+\title{Plot an AMD curve}
 \usage{
-plot_AMD(amd_object, type = c("mean", "max"), open_device = TRUE, ...)
+plot_AMD(
+  amd_object,
+  type = c("curve", "mean", "max"),
+  open_device = FALSE,
+  ...
+)
 }
 \arguments{
-\item{amd_object}{A list returned by \code{compute_amd_curve()}.}
+\item{amd_object}{An object returned by \code{compute_amd_curve()}.}
 
-\item{type}{Character string indicating which AMD curve to plot:
-\itemize{
-\item \code{"mean"} (default): plot mean AMD across iterations.
-\item \code{"max"}: plot maximum AMD across iterations.
-}}
+\item{type}{Curve to plot: \code{"curve"} (default) uses the minimum-objective
+converged fit at every \code{c}; \code{"mean"} and \code{"max"} show historical summaries
+across all random starts, including nonconverged starts. They are retained
+only for diagnostics and compatibility.}
 
-\item{open_device}{Logical; if \code{TRUE}, open a new graphics device.}
+\item{open_device}{Logical; open a new graphics device before plotting.
+The default uses the active device, as is conventional for S3 plot methods.}
 
-\item{...}{Additional graphical parameters passed to \code{plot()}.}
+\item{...}{Additional graphical parameters passed to \code{\link[graphics:plot.default]{graphics::plot()}}.}
 }
 \value{
-Invisibly returns \code{NULL}. The function is called for its side
-effect of producing a plot.
+Invisibly returns \code{NULL}.
 }
 \description{
-This function plots the Average Membership Degree (AMD) curve from an object
-returned by \code{compute_amd_curve()}. It visualises either the mean AMD
-values or the maximum AMD values across iterations, and marks the optimal
-number of configurations \if{html}{\out{<i>}}c\if{html}{\out{</i>}}\if{html}{\out{<sub>}}opt\if{html}{\out{</sub>}}.
+Plots the primary AMD curve returned by \code{compute_amd_curve()}. Historical
+restart summaries remain available as diagnostic alternatives.
 }
-\examples{
-\donttest{
-X <- matrix(rnorm(2000), ncol = 10)
-res <- compute_amd_curve(X, its = 10, nin = 2, nsp = 8)
-plot_AMD(res)
-plot_AMD(res, type = "max")
-}
-
+\details{
+Objects saved by public version 0.1.0 can still be plotted from their stored
+\code{mean} or \code{max} restart summaries. Because those objects do not contain the
+minimum-objective primary curve, the method warns and does not attempt to
+reconstruct it.
 }

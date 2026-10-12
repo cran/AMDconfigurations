@@ -1,3 +1,1 @@
-utils::globalVariables(c(
-  "k", "sigma", "AMD_max", "sd"
-))
+.amd_runtime_state <- new.env(parent = emptyenv())

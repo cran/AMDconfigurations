@@ -1,90 +1,111 @@
-#' Plot the AMD curve
+#' Plot an AMD curve
 #'
-#' This function plots the Average Membership Degree (AMD) curve from an object
-#' returned by \code{compute_amd_curve()}. It visualises either the mean AMD
-#' values or the maximum AMD values across iterations, and marks the optimal
-#' number of configurations <i>c</i><sub>opt</sub>.
+#' Plots the primary AMD curve returned by `compute_amd_curve()`. Historical
+#' restart summaries remain available as diagnostic alternatives.
 #'
-#' @param amd_object A list returned by \code{compute_amd_curve()}.
-#' @param type Character string indicating which AMD curve to plot:
-#'   \itemize{
-#'     \item \code{"mean"} (default): plot mean AMD across iterations.
-#'     \item \code{"max"}: plot maximum AMD across iterations.
-#'   }
-#' @param open_device Logical; if \code{TRUE}, open a new graphics device.
-#' @param ... Additional graphical parameters passed to \code{plot()}.
+#' Objects saved by public version 0.1.0 can still be plotted from their stored
+#' `mean` or `max` restart summaries. Because those objects do not contain the
+#' minimum-objective primary curve, the method warns and does not attempt to
+#' reconstruct it.
 #'
-#' @return Invisibly returns \code{NULL}. The function is called for its side
-#'   effect of producing a plot.
+#' @param amd_object An object returned by `compute_amd_curve()`.
+#' @param type Curve to plot: `"curve"` (default) uses the minimum-objective
+#'   converged fit at every `c`; `"mean"` and `"max"` show historical summaries
+#'   across all random starts, including nonconverged starts. They are retained
+#'   only for diagnostics and compatibility.
+#' @param open_device Logical; open a new graphics device before plotting.
+#'   The default uses the active device, as is conventional for S3 plot methods.
+#' @param ... Additional graphical parameters passed to [graphics::plot()].
 #'
-#' @examples
-#' \donttest{
-#' X <- matrix(rnorm(2000), ncol = 10)
-#' res <- compute_amd_curve(X, its = 10, nin = 2, nsp = 8)
-#' plot_AMD(res)
-#' plot_AMD(res, type = "max")
-#' }
-#'
+#' @return Invisibly returns `NULL`.
 #' @export
 plot_AMD <- function(amd_object,
-                     type = c("mean", "max"),
-                     open_device = TRUE,
+                     type = c("curve", "mean", "max"),
+                     open_device = FALSE,
                      ...) {
-
-  # --- Input checks ----------------------------------------------------------
-  if (!is.list(amd_object)) {
-    stop("amd_object must be a list returned by compute_amd_curve().")
-  }
-  if (!("mean" %in% names(amd_object)) ||
-      !("max"  %in% names(amd_object)) ||
-      !("c_opt" %in% names(amd_object))) {
-    stop("amd_object does not contain required AMD components.")
+  if (!inherits(amd_object, "amd_curve")) {
+    stop("amd_object must be an amd_curve object.", call. = FALSE)
   }
 
-  type <- match.arg(type)
-
-  # Extract AMD values
-  ks <- as.numeric(names(amd_object$mean))
-  if (anyNA(ks)) ks <- seq_along(amd_object$mean)
-
-  y <- switch(type,
-              mean = amd_object$mean,
-              max  = amd_object$max)
-
-  # --- Plot ------------------------------------------------------------------
-  if (open_device) {
+  schema <- .amd_curve_schema(amd_object)
+  type_was_missing <- missing(type)
+  if (length(open_device) != 1L || is.na(open_device) ||
+      !is.logical(open_device)) {
+    stop("open_device must be TRUE or FALSE.", call. = FALSE)
   }
 
-  plot(ks, y,
-       type = "b", pch = 16,
-       xlab = "Number of configurations (c)",
-       ylab = sprintf("AMD (%s)", type),
-       ...)
+  if (schema == "invalid") {
+    stop("amd_object does not contain a recognised AMD curve schema.",
+         call. = FALSE)
+  }
 
-  abline(v = amd_object$c_opt, col = "blue", lty = 3, lwd = 2)
+  if (schema == "legacy_0.1") {
+    if (type_was_missing) type <- "mean"
+    type <- match.arg(type, c("curve", "mean", "max"))
+    if (type == "curve") {
+      stop(
+        "a legacy AMDconfigurations 0.1.0 object has no stored primary curve; use type = \"mean\" or type = \"max\".",
+        call. = FALSE
+      )
+    }
+    .warn_legacy_amd_curve(
+      paste0("Plotting the stored ", type, " AMD restart summary.")
+    )
+    y <- amd_object[[type]]
+    # Version 0.1.0 derived c_opt from the maximum-across-starts series, not
+    # from its default mean plot. Mark it only when that matching series is
+    # requested, so compatibility does not reproduce the old visual mismatch.
+    peak_c <- if (type == "max") amd_object$c_opt else NA_integer_
+  } else {
+    type <- match.arg(type)
+    y <- switch(
+      type,
+      curve = amd_object$curve,
+      mean = amd_object$mean,
+      max = amd_object$max
+    )
+    peak_c <- if (type == "curve") amd_object$c_peak else NA_integer_
+  }
+
+  ks <- .amd_curve_candidates(y)
+
+  if (open_device) grDevices::dev.new()
+  graphics::plot(
+    ks,
+    y,
+    type = "b",
+    pch = 16,
+    xlab = "Number of configurations (c)",
+    ylab = if (type == "curve") "AMD" else sprintf("AMD (%s)", type),
+    ...
+  )
+  if (is.finite(peak_c)) {
+    graphics::abline(v = peak_c, col = "blue", lty = 3, lwd = 2)
+  }
 
   invisible(NULL)
 }
 
 #' Plot method for AMD curve objects
 #'
-#' This method provides a convenient interface to plot AMD curves returned by
-#' \code{compute_amd_curve()}. It forwards the call to \code{plot_AMD()}, allowing
-#' users to simply call \code{plot(res)}.
+#' @param x An object of class `"amd_curve"`.
+#' @param type Curve to plot; see `plot_AMD()`.
+#' @param open_device Logical; open a new graphics device before plotting.
+#' @param ... Additional arguments passed to `plot_AMD()`.
 #'
-#' @param x An object of class \code{"amd_curve"}.
-#' @param type Character string indicating which AMD curve to plot:
-#'   \code{"mean"} (default) or \code{"max"}.
-#' @param open_device Logical; if \code{TRUE}, open a new graphics device.
-#' @param ... Additional arguments passed to \code{plot_AMD()}.
-#'
-#' @return Invisibly returns \code{NULL}.
-#'
+#' @return Invisibly returns `NULL`.
 #' @export
 plot.amd_curve <- function(x,
-                           type = c("mean", "max"),
-                           open_device = TRUE,
+                           type = c("curve", "mean", "max"),
+                           open_device = FALSE,
                            ...) {
+  if (missing(type)) {
+    return(plot_AMD(
+      amd_object = x,
+      open_device = open_device,
+      ...
+    ))
+  }
   plot_AMD(
     amd_object = x,
     type = type,

@@ -1,4 +1,4 @@
-#' @importFrom stats complete.cases rnorm runif
+#' @importFrom stats complete.cases
 #' @importFrom graphics abline
 #' @importFrom grDevices dev.new
 NULL

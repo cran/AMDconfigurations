@@ -2,7 +2,7 @@
 % Please edit documentation in R/summary.amd_curve().R
 \name{summary.amd_curve}
 \alias{summary.amd_curve}
-\title{Summary method for AMD curve objects}
+\title{Summarise an AMD curve object}
 \usage{
 \method{summary}{amd_curve}(object, ...)
 }
@@ -15,7 +15,5 @@
 Invisibly returns \code{object}.
 }
 \description{
-Provides a detailed summary of an AMD curve object, including mean and
-maximum AMD values, the optimal number of configurations, and the evaluated
-range of \code{k}.
+Summarise an AMD curve object
 }

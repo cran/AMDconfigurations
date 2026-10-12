@@ -12,7 +12,7 @@
 
 
 
-<title>Geometric Analysis of Recurrent Configurations with AMDconfigurations</title>
+<title>The computational core of Average Membership Degree</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -39,6 +39,108 @@ ul.task-list{list-style: none;}
 
 
 
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
 
 
 
@@ -235,211 +337,237 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 
 
-<h1 class="title toc-ignore">Geometric Analysis of Recurrent
-Configurations with AMDconfigurations</h1>
+<h1 class="title toc-ignore">The computational core of Average
+Membership Degree</h1>
 
 
 
-<div id="introduction" class="section level1">
-<h1>Introduction</h1>
-<p>Many multivariate systems can be viewed as self‑organising dynamical
-systems, where stability and function emerge from tightly coupled
-interactions and feedbacks across scales. In this perspective, each
-observation is a snapshot of the system’s instantaneous configuration in
-a high‑dimensional state space.</p>
-<p>Complex‑systems theory predicts that such systems do not explore
-state space uniformly. Instead, trajectories tend to dwell in a limited
-set of recurrent regimes, often interpreted as multistable,
-attractor‑like or self‑organised configurations. With cross‑sectional
-data, this prediction becomes a geometric expectation: if preferred
-regimes manifest at the level of the observed variables, samples should
-cluster within a restricted number of high‑occupancy regions of
-configuration space, while intermediate regions remain sparsely
-populated.</p>
-<p>The <i>AMDconfigurations</i> package implements a geometric framework
-to detect and characterise these recurrent regimes using the <i>Average
-Membership Degree</i> (AMD). For each candidate number of configurations
-<i>c</i>, fuzzy c‑means clustering is run repeatedly, and AMD summarises
-how sharply samples are assigned to clusters across runs. Evaluating AMD
-as a function of <i>c</i> yields the AMD curve, whose peak defines the
-best‑supported number of configurations, <i>c</i><sub>opt</sub>.</p>
-<p>Beyond selecting <i>c</i><sub>opt</sub>, the framework quantifies how
-well‑defined the inferred configurations are via <b>σ‑equivalent
-calibration</b>, which matches the observed AMD peak to synthetic
-reference datasets with controlled within‑configuration dispersion. This
-provides an interpretable measure of geometric compactness that is
-comparable across datasets and preprocessing choices.</p>
-<p>Identifying the number, location and definition of recurrent
-configurations is the first step of the AMD workflow. Once these
-configurations have been detected, different scientific questions may
-arise: for example, one may wish to determine which internal state
-variables contribute to configuration separation, which external control
-parameters modulate the dynamics from which the configurations emerge,
-or both. These questions do not depend on the domain and can be posed
-even within a single dataset.</p>
-<p>This vignette focuses on the geometric core of the AMD workflow. The
-two full examples included in the package—one ecological and one
-transcriptomic—extend this workflow to more complex settings and
-illustrate two different types of questions that can be asked once
-recurrent configurations have been identified:</p>
+<div id="scope" class="section level1">
+<h1>Scope</h1>
+<p>Average Membership Degree (AMD) is a summary of a soft-membership
+matrix. It is not a clustering algorithm. The package currently uses
+fuzzy c-means to estimate memberships when constructing an AMD curve,
+but this backend is conceptually separate from the definition of the
+index.</p>
+<p>For a membership matrix <span class="math inline">\(U=(u_{ij})\)</span> with <span class="math inline">\(n\)</span> observations and <span class="math inline">\(c\)</span> columns,</p>
+<p><span class="math display">\[
+\operatorname{AMD}(U)=\frac{1}{n}\sum_{i=1}^{n}\max_j(u_{ij})-\frac{1}{c}.
+\]</span></p>
+<p>Therefore <span class="math inline">\(0 \leq \operatorname{AMD}(U)
+\leq 1-1/c\)</span>. AMD is zero when every row is uniform and reaches
+its upper bound for crisp memberships. The formula also accepts <span class="math inline">\(c=1\)</span>, where AMD is zero, but operational
+curves compare alternative resolutions and begin at <span class="math inline">\(c=2\)</span>.</p>
+</div>
+<div id="constructing-a-curve" class="section level1">
+<h1>Constructing a curve</h1>
+<p>For each candidate <span class="math inline">\(c\)</span>,
+<code>compute_amd_curve()</code> runs several initialisations of the
+current fuzzy c-means backend. Random starts are computational attempts
+to estimate the same solution, not statistical replicates. The converged
+fit with the smallest fuzzy c-means objective supplies the primary curve
+point.</p>
+<p>The following example contains three groups by construction.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">8301</span>)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a>X <span class="ot">&lt;-</span> <span class="fu">rbind</span>(</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a>  <span class="fu">matrix</span>(<span class="fu">rnorm</span>(<span class="dv">90</span>, <span class="at">mean =</span> <span class="dv">0</span>, <span class="at">sd =</span> <span class="fl">0.7</span>), <span class="at">ncol =</span> <span class="dv">3</span>),</span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a>  <span class="fu">matrix</span>(<span class="fu">rnorm</span>(<span class="dv">90</span>, <span class="at">mean =</span> <span class="dv">4</span>, <span class="at">sd =</span> <span class="fl">0.7</span>), <span class="at">ncol =</span> <span class="dv">3</span>),</span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a>  <span class="fu">matrix</span>(<span class="fu">rnorm</span>(<span class="dv">90</span>, <span class="at">mean =</span> <span class="dv">8</span>, <span class="at">sd =</span> <span class="fl">0.7</span>), <span class="at">ncol =</span> <span class="dv">3</span>)</span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a>)</span>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a></span>
+<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a>candidate_c <span class="ot">&lt;-</span> <span class="dv">2</span><span class="sc">:</span><span class="dv">5</span></span>
+<span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a>starts <span class="ot">&lt;-</span> <span class="dv">3</span><span class="dt">L</span></span>
+<span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a>seed_matrix <span class="ot">&lt;-</span> <span class="fu">outer</span>(</span>
+<span id="cb1-11"><a href="#cb1-11" tabindex="-1"></a>  <span class="fu">seq_len</span>(starts),</span>
+<span id="cb1-12"><a href="#cb1-12" tabindex="-1"></a>  candidate_c,</span>
+<span id="cb1-13"><a href="#cb1-13" tabindex="-1"></a>  <span class="cf">function</span>(start, c) <span class="dv">100000</span><span class="dt">L</span> <span class="sc">+</span> <span class="dv">1000</span><span class="dt">L</span> <span class="sc">*</span> c <span class="sc">+</span> start</span>
+<span id="cb1-14"><a href="#cb1-14" tabindex="-1"></a>)</span>
+<span id="cb1-15"><a href="#cb1-15" tabindex="-1"></a><span class="fu">colnames</span>(seed_matrix) <span class="ot">&lt;-</span> <span class="fu">as.character</span>(candidate_c)</span>
+<span id="cb1-16"><a href="#cb1-16" tabindex="-1"></a></span>
+<span id="cb1-17"><a href="#cb1-17" tabindex="-1"></a>amd_curve <span class="ot">&lt;-</span> <span class="fu">compute_amd_curve</span>(</span>
+<span id="cb1-18"><a href="#cb1-18" tabindex="-1"></a>  X,</span>
+<span id="cb1-19"><a href="#cb1-19" tabindex="-1"></a>  <span class="at">its =</span> starts,</span>
+<span id="cb1-20"><a href="#cb1-20" tabindex="-1"></a>  <span class="at">nin =</span> <span class="fu">min</span>(candidate_c),</span>
+<span id="cb1-21"><a href="#cb1-21" tabindex="-1"></a>  <span class="at">nsp =</span> <span class="fu">max</span>(candidate_c),</span>
+<span id="cb1-22"><a href="#cb1-22" tabindex="-1"></a>  <span class="at">seeds =</span> seed_matrix,</span>
+<span id="cb1-23"><a href="#cb1-23" tabindex="-1"></a>  <span class="at">iter_max =</span> <span class="dv">1000</span>,</span>
+<span id="cb1-24"><a href="#cb1-24" tabindex="-1"></a>  <span class="at">verbose =</span> <span class="cn">FALSE</span></span>
+<span id="cb1-25"><a href="#cb1-25" tabindex="-1"></a>)</span>
+<span id="cb1-26"><a href="#cb1-26" tabindex="-1"></a></span>
+<span id="cb1-27"><a href="#cb1-27" tabindex="-1"></a><span class="fu">data.frame</span>(</span>
+<span id="cb1-28"><a href="#cb1-28" tabindex="-1"></a>  <span class="at">c =</span> candidate_c,</span>
+<span id="cb1-29"><a href="#cb1-29" tabindex="-1"></a>  <span class="at">AMD =</span> <span class="fu">unname</span>(amd_curve<span class="sc">$</span>curve),</span>
+<span id="cb1-30"><a href="#cb1-30" tabindex="-1"></a>  <span class="at">converged_starts =</span> <span class="fu">colSums</span>(amd_curve<span class="sc">$</span>converged)</span>
+<span id="cb1-31"><a href="#cb1-31" tabindex="-1"></a>)</span>
+<span id="cb1-32"><a href="#cb1-32" tabindex="-1"></a><span class="co">#&gt;   c       AMD converged_starts</span></span>
+<span id="cb1-33"><a href="#cb1-33" tabindex="-1"></a><span class="co">#&gt; 2 2 0.3466353                3</span></span>
+<span id="cb1-34"><a href="#cb1-34" tabindex="-1"></a><span class="co">#&gt; 3 3 0.6309742                3</span></span>
+<span id="cb1-35"><a href="#cb1-35" tabindex="-1"></a><span class="co">#&gt; 4 4 0.6310310                3</span></span>
+<span id="cb1-36"><a href="#cb1-36" tabindex="-1"></a><span class="co">#&gt; 5 5 0.5942833                3</span></span>
+<span id="cb1-37"><a href="#cb1-37" tabindex="-1"></a></span>
+<span id="cb1-38"><a href="#cb1-38" tabindex="-1"></a><span class="fu">abs</span>(amd_curve<span class="sc">$</span>curve[[<span class="st">&quot;3&quot;</span>]] <span class="sc">-</span> amd_curve<span class="sc">$</span>curve[[<span class="st">&quot;4&quot;</span>]])</span>
+<span id="cb1-39"><a href="#cb1-39" tabindex="-1"></a><span class="co">#&gt; [1] 5.679318e-05</span></span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="fu">plot</span>(amd_curve, <span class="at">open_device =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
+<p><img role="img" src="data:image/png;base64,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" /><!-- --></p>
+<p>Named seed matrices make the mapping from <code>(start, c)</code>
+explicit. If a wider candidate range uses the same master matrix, all
+common fits remain identical.</p>
+<p>New curve objects carry <code>schema_version = 2L</code>. Saved
+public 0.1.0 objects can still be printed, summarised and plotted from
+their stored <code>mean</code> and <code>max</code> values. They emit a
+warning because they do not contain objectives and fitted memberships
+from which the current primary curve could be reconstructed.</p>
+<p>This deliberately retained example also illustrates why the complete
+curve is the primary object of interpretation. The data generator
+contains three groups, yet the AMD values at <code>c=3</code> and
+<code>c=4</code> are nearly tied and the numerical winner can be
+<code>c=4</code>. The subsequent decline supports a well-defined
+resolution around that short plateau, but the isolated arithmetic
+maximum does not by itself distinguish three generating groups from a
+four-part refinement. The known truth is used below to extract
+<code>c=3</code>; it is not inferred by <code>which.max()</code>.</p>
+</div>
+<div id="reading-before-assigning" class="section level1">
+<h1>Reading before assigning</h1>
+<p><code>c_peak</code> and its compatibility alias <code>c_opt</code>
+report the first numerical maximum of the evaluated primary curve. They
+do not encode a complete scientific rule. In particular:</p>
 <ul>
-<li>in one example, the aim is to evaluate whether external control
-parameters help explain configuration structure,<br />
-</li>
-<li>in the other, the aim is to identify the internal state variables
-most strongly associated with configuration separation.</li>
+<li>a maximum at the right boundary has no observed post-peak
+behaviour;</li>
+<li>nearly equal adjacent values may represent a resolution
+plateau;</li>
+<li>exact ties are reported at the smaller <code>c</code>;</li>
+<li>an internal maximum should be considered with its subsequent
+decline, stability and the range examined.</li>
 </ul>
-<p>The AMD framework itself is agnostic to this distinction: it detects
-the recurrent regimes supported by the data, and the subsequent
-interpretation—whether in terms of control parameters, state variables,
-or both—depends entirely on the scientific objective.</p>
+<p>The package therefore requires an explicit <code>c</code> when
+extracting assignments. Here <code>c=3</code> is used because it is
+known from the synthetic generator, not because the API selected it
+automatically.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>chosen_c <span class="ot">&lt;-</span> <span class="dv">3</span><span class="dt">L</span></span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>assignment <span class="ot">&lt;-</span> <span class="fu">assign_configurations</span>(amd_curve, <span class="at">c =</span> chosen_c)</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a><span class="fu">identical</span>(</span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>  assignment<span class="sc">$</span>membership,</span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a>  amd_curve<span class="sc">$</span>selected_fits[[<span class="fu">as.character</span>(chosen_c)]]<span class="sc">$</span>membership</span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>)</span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
 </div>
-<div id="background" class="section level1">
-<h1>Background</h1>
-<p>The AMD framework has evolved across several scientific domains.</p>
-<p><i>Early development</i><br />
-The idea of using membership‑based summaries from fuzzy clustering to
-detect recurrent configurations first appeared in Mendoza &amp; Araújo
-(2019, <i>Nature Communications</i>), where it was introduced as a
-geometric signature of multistability in ecological communities. The
-method was formalised in Mendoza &amp; Araújo (2022, <i>Ecography</i>),
-which:</p>
-<ul>
-<li>provided the first explicit mathematical definition of AMD<br />
-</li>
-<li>clarified its geometric rationale<br />
-</li>
-<li>established the AMD curve as a criterion to detect discrete
-configurations<br />
-</li>
-<li>introduced the idea of comparing real AMD peaks with synthetic
-references</li>
-</ul>
-<p>Across subsequent ecological and paleoecological studies
-(<i>PNAS</i>, <i>Journal of Biogeography</i>, <i>Ecography</i>), AMD
-consistently revealed discrete ecological configurations and helped
-identify the control parameters governing their emergence (e.g.,
-climate, productivity, environmental stability).</p>
-<p><i>Transcriptomic generalisation</i><br />
-A later transcriptomic study extended the method to extremely
-high‑dimensional gene‑expression data (&gt;58,000 transcripts). Here the
-focus shifted from external drivers to internal state variables: instead
-of identifying environmental controls, the goal was to determine which
-transcripts define the observed configurations.</p>
-<p>Despite the dimensionality, configuration separation was dominated by
-a small set of mitochondrial genes, illustrating how AMD isolates
-compact, interpretable axes of variation.</p>
-<p>This study also formalised the synthetic‑reference idea into a
-reproducible σ‑equivalent calibration, providing:</p>
-<ul>
-<li>a continuous dispersion scale<br />
-</li>
-<li>a clear interpretation of configuration definition<br />
-</li>
-<li>comparability across datasets</li>
-</ul>
-<p>This methodological consolidation motivated the development of the
-<i>AMDconfigurations</i> package.</p>
+<div id="describing-stored-partitions" class="section level1">
+<h1>Describing stored partitions</h1>
+<p>The diagnostic interface reads the fits already stored in the curve.
+It does not refit them, construct sample distances or select a number of
+groups.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>diagnostics <span class="ot">&lt;-</span> <span class="fu">diagnose_amd</span>(amd_curve)</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>diagnostics<span class="sc">$</span>candidates[, <span class="fu">c</span>(<span class="st">&quot;c&quot;</span>, <span class="st">&quot;amd&quot;</span>, <span class="st">&quot;mean_winning_membership&quot;</span>)]</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="co">#&gt;   c       amd mean_winning_membership</span></span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="co">#&gt; 1 2 0.3466353               0.8466353</span></span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a><span class="co">#&gt; 2 3 0.6309742               0.9643075</span></span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a><span class="co">#&gt; 3 4 0.6310310               0.8810310</span></span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a><span class="co">#&gt; 4 5 0.5942833               0.7942833</span></span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a>diagnostics<span class="sc">$</span>transitions</span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a><span class="co">#&gt;   from_c to_c c_step    amd_change       ari       nmi from_fragmentation</span></span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a><span class="co">#&gt; 1      2    3      1  2.843389e-01 0.4365947 0.5302015          0.3333333</span></span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a><span class="co">#&gt; 2      3    4      1  5.679318e-05 0.8661654 0.9089745          0.1666667</span></span>
+<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a><span class="co">#&gt; 3      4    5      1 -3.674771e-02 0.8502425 0.9238963          0.1444444</span></span>
+<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a><span class="co">#&gt;   to_fragmentation</span></span>
+<span id="cb4-14"><a href="#cb4-14" tabindex="-1"></a><span class="co">#&gt; 1        0.1555556</span></span>
+<span id="cb4-15"><a href="#cb4-15" tabindex="-1"></a><span class="co">#&gt; 2        0.0000000</span></span>
+<span id="cb4-16"><a href="#cb4-16" tabindex="-1"></a><span class="co">#&gt; 3        0.0000000</span></span></code></pre></div>
+<p>The dictionary in <code>diagnostics$dictionary</code> defines each
+summary. Membership entropy and top-two gaps describe membership
+definition, not density or geometric compactness. Agreement between
+adjacent partitions is not stability under sample resampling. The
+default ambiguity gap is a descriptive convention, not a universal
+cutoff. Diagnostics not measured are listed explicitly in
+<code>diagnostics$unavailable</code>.</p>
 </div>
-<div id="installation" class="section level1">
-<h1>Installation</h1>
-<p>Development version from GitHub:</p>
-<pre><code># eval=FALSE to avoid execution during CRAN checks # devtools::install_github(&quot;mmendoza1967/AMDconfigurations&quot;)</code></pre>
-<p>CRAN version (once available):</p>
-<pre><code>install.packages(&quot;devtools&quot;)</code></pre>
-<p>Load the package:</p>
-<pre><code>library(&quot;AMDconfigurations&quot;)</code></pre>
+<div id="optional-model-assisted-interpretation" class="section level1">
+<h1>Optional model-assisted interpretation</h1>
+<p>Version 0.2.0 includes an optional reader. It uses five fitted random
+forests in an external corrected-v2 bundle; no models are downloaded or
+trained by the package. <code>ranger</code> and <code>digest</code> are
+needed only for this workflow. Obtain the model file and its expected
+SHA-256 from the same trusted release.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>reader <span class="ot">&lt;-</span> <span class="fu">load_amd_predictor</span>(bundle_path, <span class="at">sha256 =</span> bundle_sha256)</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>result <span class="ot">&lt;-</span> <span class="fu">predict_amd</span>(X, reader, <span class="at">seed =</span> <span class="dv">123</span>, <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a><span class="fu">plot</span>(result)</span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>result<span class="sc">$</span>proposed_k</span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>result<span class="sc">$</span>reliability</span></code></pre></div>
+<p>The reader requires <code>c=2:14</code>, 20 principal starts,
+<code>m=2</code>, <code>iter_max=2000</code>, and no scaling or variable
+selection. A curve already computed with those settings can be passed as
+<code>curve</code>; the shorter illustrative curve above cannot. There
+are also five computational refits per c for the frozen descriptors,
+even when the main curve is reused. These refits do not resample
+observations.</p>
+<p>The proposed K targets the numerically resolved density-mode count
+used as the simulation reference, not necessarily the number of
+generating components. AMD itself does not estimate a density. The
+proposal is separate from the numerical AMD maximum and does not
+establish the true number of configurations. Off-grid proposals
+themselves are labelled exploratory. Assignments still require the
+user’s explicit <code>c</code>. Reliability estimates correctness of the
+emitted one/several-modes decision and correctness of the exact proposed
+K, separately; it is not directly the probability that groups exist.</p>
+<p>The corrected forests’ historical calibrators were reassessed on the
+previously examined final simulation bank, not in a new prospective
+validation. Reliability is suppressed by default unless N is 150 or 600,
+D is 2, 6 or 15, the output is within the observed support K=1:8 and no
+unassessed missingness occurs. Matching N and D does not certify
+new-data geometry; do not subsample or pad data merely to obtain a
+reported certainty. <code>allow_extrapolation=TRUE</code> can expose
+unvalidated numerical values away from the grid, but cannot validate
+them.</p>
+<p>The frozen models omitted value columns for the zero-variance
+fraction (always zero) and minimum covariance-rank fraction (always
+one). Departures suppress certainty even on the grid and cannot be
+overridden with <code>allow_extrapolation</code>.</p>
+<p>The descriptors include quadratic distance and covariance operations.
+A working-memory risk guard runs before new fits; it excludes the loaded
+forests and is neither a guaranteed total-memory bound nor a runtime
+limit. Partition distances use all observations; global distance
+summaries use a seeded sample of 2000 rows when N &gt; 2000, as required
+by the frozen feature definition. The actual count and exact/subsampled
+flags are recorded. No additional approximation bypasses the guard. The
+manual workflow and stored-partition diagnostics remain usable without
+these operations.</p>
 </div>
-<div id="example-datasets" class="section level1">
-<h1>Example datasets</h1>
-<p>The package includes two real datasets that illustrate how the AMD
-workflow can be applied to different scientific questions.<br />
-Both datasets contain multivariate observations from complex systems,
-but they differ in dimensionality, biological context, and in the type
-of inference that becomes meaningful once recurrent configurations have
-been detected.</p>
-<p>The AMD framework itself is agnostic to these differences: it
-identifies the geometric structure of the data, and the interpretation
-of that structure—whether in terms of control parameters, state
-variables, or both—depends on the scientific context and on the
-objective of the analysis.<br />
-The two examples included in the package therefore represent <b>two
-distinct types of post‑AMD questions</b>, not domain‑specific rules.</p>
-<div id="ecological-dataset-fulldata" class="section level2">
-<h2>Ecological dataset: Fulldata</h2>
-<p>The dataset <b>Fulldata</b> contains trophic‑guild composition of
-terrestrial vertebrate assemblages across the global terrestrial
-surface, together with bioclimatic variables and protected‑area
-metadata.<br />
-Each row corresponds to a 1 × 1° terrestrial grid cell, and the table
-also includes the geographic coordinates and the name of the protected
-area associated with that cell.<br />
-These fields are used later to define spatial blocks for
-cross‑validation.</p>
-<p>From this table we derive:</p>
-<ul>
-<li><b>Trophdata</b>: a nine‑dimensional trophic space used to detect
-recurrent trophic configurations<br />
-</li>
-<li><b>Climdata</b>: a set of bioclimatic predictors used to evaluate
-whether external environmental conditions can predict those
-configurations</li>
-</ul>
-<p>This example illustrates a situation in which, after detecting
-configurations, it is natural to ask whether <b>external control
-parameters</b> (here, climate) help explain their emergence or spatial
-distribution.</p>
-<p>The full script is provided in:<br />
-<code>inst/examples/example_ecology.R</code></p>
+<div id="reproducibility-record" class="section level1">
+<h1>Reproducibility record</h1>
+<p>The curve stores seeds, objectives, convergence, transformations,
+retained variables and the map of complete and omitted rows. It also
+links to a process-level software manifest.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>manifest <span class="ot">&lt;-</span> <span class="fu">amd_reproducibility_manifest</span>()</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a><span class="fu">identical</span>(amd_curve<span class="sc">$</span>manifest_id, manifest<span class="sc">$</span>manifest_id)</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a><span class="co">#&gt; [1] TRUE</span></span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>manifest[<span class="fu">c</span>(<span class="st">&quot;r_version&quot;</span>, <span class="st">&quot;amdconfigurations_version&quot;</span>, <span class="st">&quot;e1071_version&quot;</span>, <span class="st">&quot;rng_kind&quot;</span>)]</span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a><span class="co">#&gt; $r_version</span></span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a><span class="co">#&gt; [1] &quot;R version 4.6.1 (2026-06-24)&quot;</span></span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a><span class="co">#&gt; $amdconfigurations_version</span></span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a><span class="co">#&gt; [1] &quot;0.2.1&quot;</span></span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a><span class="co">#&gt; $e1071_version</span></span>
+<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a><span class="co">#&gt; [1] &quot;1.7.17&quot;</span></span>
+<span id="cb6-13"><a href="#cb6-13" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb6-14"><a href="#cb6-14" tabindex="-1"></a><span class="co">#&gt; $rng_kind</span></span>
+<span id="cb6-15"><a href="#cb6-15" tabindex="-1"></a><span class="co">#&gt; [1] &quot;Mersenne-Twister&quot; &quot;Inversion&quot;        &quot;Rejection&quot;</span></span></code></pre></div>
+<p>In a production analysis, retrieve the manifest immediately after
+every curve and save one copy of each distinct <code>manifest_id</code>.
+Curves sharing an identifier can share that copy. Each parallel worker,
+and each different <code>RNGkind()</code> used within a worker, receives
+its own identifier.</p>
 </div>
-<div id="transcriptomic-dataset-transcdata" class="section level2">
-<h2>Transcriptomic dataset: Transcdata</h2>
-<p>The dataset <b>Transcdata</b> contains high‑dimensional
-gene‑expression profiles (&gt;58,000 variables) from a cancer
-compendium.<br />
-After removing metadata columns, the expression matrix defines a very
-high‑dimensional state space in which each sample represents a
-transcriptomic configuration.</p>
-<p>The package includes a reduced version of this dataset,
-<code>Transcdata_small</code>, containing the 1000 variables with
-highest variance.<br />
-This reduced dataset is used in the examples and ensures that the
-package remains lightweight and CRAN‑compatible.</p>
-<p>The full cleaned transcriptomic dataset (~58,000 variables) is
-publicly available at Zenodo<br />
-(DOI: <a href="https://doi.org/10.5281/zenodo.18604443" class="uri">https://doi.org/10.5281/zenodo.18604443</a>) and is required
-to reproduce the complete analyses presented in the associated
-publication.</p>
-<p>In this example, once configurations have been detected, the natural
-question is different:<br />
-rather than external drivers, the goal is to identify the <b>internal
-state variables</b> (transcripts) most strongly associated with
-configuration separation.<br />
-This is achieved using XGBoost, robustness analysis across multiple
-refits, and partial‑dependence profiles.</p>
-</div>
-<div id="purpose-of-the-two-examples" class="section level2">
-<h2>Purpose of the two examples</h2>
-<p>Together, the two datasets illustrate <b>two complementary types of
-inference</b> that arise naturally once recurrent configurations have
-been identified:</p>
-<ul>
-<li>detecting recurrent configurations in high‑dimensional data<br />
-</li>
-<li>interpreting those configurations either through
-<ul>
-<li><b>external control parameters</b>, or<br />
-</li>
-<li><b>internal state variables</b></li>
-</ul></li>
-</ul>
-<p>The vignette focuses on the geometric core of the method, while the
-examples show how the same workflow can support different types of
-scientific questions depending on the problem being addressed. Once
-recurrent configurations have been identified, one may investigate
-external control parameters, internal state variables, or both, even
-within the same dataset.</p>
-</div>
+<div id="current-limits" class="section level1">
+<h1>Current limits</h1>
+<p>The <code>mean</code> and <code>max</code> components are preserved
+for compatibility with earlier versions. They summarise all starts,
+including nonconverged starts, and are not the primary curve or a basis
+for scientific selection.</p>
+<p>The package does not claim that AMD height, peak sharpness or curve
+prominence measures compactness, separation or definition in a universal
+sense.</p>
 </div>
 
 
